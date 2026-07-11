@@ -1,72 +1,35 @@
 {
   "name": "webchronicle",
-  "version": "1.0.0",
-  "description": "A web archiving tool that allows you to capture and explore snapshots of webpages over time—like the Wayback Machine, but as your own personal Time Machine.",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "clean:site": "rimraf './_site'",
-    "scraper": "node --no-warnings ./website-scraper.js",
-    "scraper:debug": "export DEBUG=website-scraper*; node --no-warnings ./website-scraper.js",
-    "debug:11ty": "DEBUG=Eleventy* npx @11ty/eleventy",
-    "watch:11ty": "npx @11ty/eleventy --serve --quiet",
-    "build:11ty": "npx @11ty/eleventy",
-    "build:js": "npx esbuild ./src/_js/main.js --outfile=./_site/js/main.js --bundle --minify",
-    "watch:js": "npx esbuild ./src/_js/main.js --outfile=./_site/js/main.js --bundle --watch --sourcemap",
-    "build:js-webchronicle": "npx esbuild ./src/_js/webchronicle.js --outfile=./_site/js/webchronicle.js --bundle --minify",
-    "watch:js-webchronicle": "npx esbuild ./src/_js/webchronicle.js --outfile=./_site/js/webchronicle.js --bundle --watch --sourcemap",
-    "watch:tailwind": "npx tailwindcss --postcss -i ./src/_css/main.css -o ./_site/css/main.css --watch",
-    "build:tailwind": "npx tailwindcss --postcss -i ./src/_css/main.css -o ./_site/css/main.css --minify",
-    "webchronicle": "node ./build-chronicle.js",
-    "start": "ELEVENTY_ENV=development npm-run-all --serial webchronicle --parallel watch:*",
-    "build": "ELEVENTY_ENV=production npm-run-all --serial webchronicle --parallel build:*"
-  },
+  "version": "2.0.0",
+  "description": "A web archiver that runs on your machine. Save snapshots of websites and browse them later, offline.",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/reatlat/webchronicle.git"
+    "url": "git+ssh://git@github.com/freshjuice-dev/webchronicle.git"
   },
   "keywords": [
-    "11ty",
-    "eleventy",
-    "tailwindcss",
     "web-archiving",
     "web-archiver",
     "web-archiving-tool",
-    "webchronicle"
+    "webchronicle",
+    "rust",
+    "scraper",
+    "wayback"
   ],
   "author": {
-    "name": "Alex Zappa",
-    "email": "alex@zappa.dev",
-    "url": "https://alex.zappa.dev/"
+    "name": "FreshJuice",
+    "email": "contact@freshjuice.dev",
+    "url": "https://freshjuice.dev/"
   },
-  "license": "MIT",
+  "contributors": [
+    {
+      "name": "Alex Zappa",
+      "email": "alex@zappa.dev",
+      "url": "https://alex.zappa.dev/"
+    }
+  ],
+  "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/reatlat/webchronicle/issues"
+    "url": "https://github.com/freshjuice-dev/webchronicle/issues"
   },
-  "homepage": "https://github.com/reatlat/webchronicle#readme",
-  "devDependencies": {
-    "@11ty/eleventy": "^3.1.2",
-    "@11ty/eleventy-img": "^6.0.4",
-    "@tailwindcss/typography": "^0.5.19",
-    "autoprefixer": "^10.4.22",
-    "axios": "^1.13.2",
-    "cheerio": "^1.1.2",
-    "esbuild": "^0.27.0",
-    "get-sitemap-links": "^1.1.0",
-    "luxon": "^3.7.2",
-    "npm-run-all": "^4.1.5",
-    "ora": "^9.0.0",
-    "postcss": "^8.5.6",
-    "postcss-cli": "^11.0.1",
-    "postcss-discard-comments": "^7.0.5",
-    "postcss-easy-import": "^4.0.0",
-    "postcss-merge-rules": "^7.0.7",
-    "rimraf": "^6.1.2",
-    "tailwindcss": "^3.4.15",
-    "website-scraper": "^6.0.0"
-  },
-  "engines": {
-    "node": ">=20.16.0"
-  }
+  "homepage": "https://webchronicle.app"
 }

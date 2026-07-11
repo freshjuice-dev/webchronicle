@@ -1,6 +1,23 @@
+# Build output
 _site/
-_temp/
-node_modules/
-.netlify/
+
+# Rust
+target/
+
+# Scraped data (user-generated, not committed)
+scraped-websites/
+
+# IDE
 .idea/
-.wrangler/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# Logs
+*.log

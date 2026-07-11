@@ -1,28 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title or metadata.title }}</title>
-    <meta name="description" content="{{ desc or description or metadata.description }}">
-    <meta name="generator" content="{{ eleventy.generator }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" href="{{ '/css/main.css' | url }}">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="stylesheet" href="/css/main.css">
     <script>
-        document.documentElement.classList.add("js");
+        (function() {
+            var saved = localStorage.getItem('wc-theme');
+            if (saved === 'dark' || saved === 'light') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
     </script>
 </head>
-<body class="flex flex-col min-h-screen font-sans bg-zinc-100 text-zinc-950 dark:bg-zinc-900 dark:!text-zinc-100">
-
-    <a href="#main-content" class="skip-link sr-only">Skip to main content</a>
-
-    <header class="p-4 py-8">
-        <a href="/" title="{{ metadata.title }}">
-            {# Logo #}
-            <svg class="mx-auto max-w-full w-64" width="372" height="113" viewBox="0 0 372 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+<body>
+    <header class="wc-header">
+        <a href="/" class="wc-logo" title="{{ title }}">
+            <svg width="280" height="85" viewBox="0 0 372 113" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <circle cx="141" cy="63" r="10" fill="currentColor"/>
                 <rect x="137" y="5" width="8" height="12" fill="currentColor"/>
                 <rect x="126" width="30" height="5" fill="currentColor"/>
@@ -41,27 +37,21 @@
                 <rect x="105.531" y="22.3793" width="4" height="8.69799" transform="rotate(-41.6846 105.531 22.3793)" fill="currentColor"/>
                 <line x1="103.166" y1="23.1765" x2="109.176" y2="17.8339" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
             </svg>
-            <h1 class="sr-only">{{ metadata.title }}</h1>
         </a>
     </header>
-
-    <main id="main-content" class="grow p-4">
-        <div class="prose md:prose-lg prose-zinc dark:prose-zincDark mx-auto">
-            {{ content | safe }}
-        </div>
+    <main class="wc-main">
+        {% block content %}{% endblock %}
     </main>
-
-    <footer class="text-center p-4">
-        "Special thanks to <a href="https://www.linkedin.com/in/james-dancer/?utm_source=webchronicle">James&nbsp;Dancer</a> for the inspiration behind the name—your idea was spot on!"
-        <br/>
-        <br/>
-        Build with <a href="https://www.11ty.dev/?utm_source=webchronicle">Eleventy</a> and <a href="https://github.com/website-scraper/node-website-scraper">website-scraper</a>.
-        Logo deign by <a href="https://tatiana.zappa.art/?utm_source=webchronicle">Tatiana&nbsp;Zappa</a>.
-        <br/>
-        MIT&nbsp;licensed. Read <a href="https://alex.zappa.dev/blog/webchronicle/?utm_source=webchronicle">the blog post</a>. Source&nbsp;code on <a href="https://github.com/reatlat/webchronicle/">GitHub</a>. Crafted&nbsp;by <a href="https://alex.zappa.dev/?utm_source=webchronicle">Alex&nbsp;Zappa</a>.
+    <footer class="wc-footer">
+        <div class="wc-footer-links">
+            Built with <a href="https://webchronicle.app/">webChronicle</a> ·
+            <a href="https://github.com/freshjuice-dev/webchronicle">Source</a> ·
+            AGPL-3.0-or-later
+        </div>
+        <button class="wc-theme-toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); localStorage.setItem('wc-theme', document.documentElement.getAttribute('data-theme'));">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span class="wc-toggle-label">Toggle theme</span>
+        </button>
     </footer>
-
-    <script defer src="{{ '/js/main.js' | url }}"></script>
-
 </body>
 </html>

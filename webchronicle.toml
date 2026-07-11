@@ -1,0 +1,12 @@
+# webChronicle configuration
+# https://webchronicle.app/
+
+[site]
+title = "webChronicle"
+description = "A web archiver that runs on your machine"
+base_url = "https://webchronicle.app"
+
+[scraper]
+urls = ["https://covalent.com", "https://mat-cs.com", "https://alex.zappa.dev"]
+recursive = true
+max_depth = 3

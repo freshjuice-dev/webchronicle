@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if has_snapshots %}
+<div class="wc-archive-header">
+    <h1>Archive</h1>
+    <p class="wc-archive-meta">{{ total_sites }} sites · {{ total_snapshots }} snapshots</p>
+</div>
+
+{% for strip in strips %}
+<section class="wc-site">
+    <h2 class="wc-site-title">{{ strip.domain }}</h2>
+    <span class="wc-site-count">{{ strip.snapshots|length }} snapshot{% if strip.snapshots|length > 1 %}s{% endif %}</span>
+    <ul class="wc-snapshot-list">
+        {% for snap in strip.snapshots %}
+        <li class="wc-snapshot">
+            <a href="/snapshots/{{ snap.time }}/{{ strip.domain }}/" class="wc-snapshot-link">
+                <time class="wc-snapshot-date">{{ snap.time | format_date(format="d LLL yyyy") }}</time>
+                <span class="wc-snapshot-time">{{ snap.time | format_date(format="hh:mm a") }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endfor %}
+
+{% else %}
+<div class="wc-empty">
+    <h1>No snapshots yet</h1>
+    <p>Run <code>webchronicle scrape</code> to capture your first snapshot.</p>
+</div>
+{% endif %}
+{% endblock %}
