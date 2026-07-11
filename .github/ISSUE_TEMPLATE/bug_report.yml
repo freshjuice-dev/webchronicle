@@ -1,0 +1,29 @@
+---
+name: Bug report
+about: Something isn't working right
+title: "[BUG] "
+labels: ["bug"]
+assignees: ["reatlat"]
+---
+
+**What happened?**
+A clear description of the problem.
+
+**How to reproduce**
+Steps to trigger the issue:
+1. Run `webchronicle ...`
+2. ...
+3. See error
+
+**Expected behavior**
+What you expected to happen.
+
+**Environment**
+- OS: [e.g. macOS, Linux, Windows]
+- webChronicle version: [run `webchronicle --version`]
+- How installed: [built from source / downloaded binary]
+
+**Logs**
+```
+Paste relevant output here
+```

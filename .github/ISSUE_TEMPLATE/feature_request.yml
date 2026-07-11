@@ -1,0 +1,16 @@
+---
+name: Feature request
+about: Suggest something new
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: ["reatlat"]
+---
+
+**What do you want?**
+A short description of the feature.
+
+**Why?**
+What problem does this solve or what does it improve?
+
+**How would it work?**
+If you have an idea of how it should behave, describe it here.
