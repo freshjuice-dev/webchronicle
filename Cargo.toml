@@ -1,0 +1,32 @@
+[package]
+name = "webchronicle"
+version = "2.0.0"
+edition = "2024"
+description = "A web archiver that runs on your machine"
+license = "AGPL-3.0-or-later"
+authors = ["FreshJuice <contact@freshjuice.dev>"]
+
+[[bin]]
+name = "webchronicle"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"], default-features = false }
+scraper = "0.23"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tera = "1"
+chrono = { version = "0.4", features = ["serde"] }
+tiny_http = "0.12"
+include_dir = "0.7"
+tokio = { version = "1", features = ["full"] }
+toml = "0.9"
+url = "2"
+regex = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
