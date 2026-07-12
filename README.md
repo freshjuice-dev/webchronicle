@@ -1,6 +1,7 @@
 # webChronicle
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/freshjuice-dev/webchronicle)](https://github.com/freshjuice-dev/webchronicle/releases/latest)
 [![GitHub stars](https://img.shields.io/github/stars/freshjuice-dev/webchronicle)](https://github.com/freshjuice-dev/webchronicle/stargazers)
 
 A web archiver that runs on your machine. Save snapshots of websites and browse them later, offline, the way they looked on the day you saved them.
