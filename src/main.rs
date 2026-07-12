@@ -1,14 +1,5 @@
-mod cli;
-mod config;
-mod scraper;
-mod ledger;
-mod builder;
-mod server;
-mod assets;
-mod templates;
-
 use clap::Parser;
-use cli::{Cli, Command};
+use webchronicle::cli::{self, Cli, Command};
 
 fn main() {
     let cli = Cli::parse();

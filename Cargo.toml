@@ -6,6 +6,10 @@ description = "A web archiver that runs on your machine"
 license = "AGPL-3.0-or-later"
 authors = ["FreshJuice <contact@freshjuice.dev>"]
 
+[lib]
+name = "webchronicle"
+path = "src/lib.rs"
+
 [[bin]]
 name = "webchronicle"
 path = "src/main.rs"
