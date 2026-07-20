@@ -1,13 +1,16 @@
 // webChronicle external link interceptor + nav state reporter
-// Runs inside served snapshot pages (same-origin as iframe, cross-origin to Tauri parent)
 (function () {
   var origin = window.location.origin;
 
   function reportNav() {
+    var state = history.state;
+    var pos = (state && typeof state.navPos === "number") ? state.navPos : null;
+    if (pos === null) pos = history.length - 1;
+    history.replaceState({ navPos: pos }, "");
     window.parent.postMessage({
       type: "wc-nav-state",
-      canGoBack: history.length > 1,
-      canGoForward: false,
+      canGoBack: pos > 0,
+      canGoForward: pos < history.length - 1,
       url: location.href
     }, "*");
   }
