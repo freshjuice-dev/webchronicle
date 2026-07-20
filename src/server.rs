@@ -6,9 +6,11 @@ pub fn serve(site_dir: &Path, port: u16) -> Result<(), Box<dyn std::error::Error
     serve_with_flags(site_dir, port, ServerFlags::default())
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone)]
 pub struct ServerFlags {
     pub skip_overlay: bool,
+    pub block_trackers: bool,
+    pub tracker_domains: Vec<String>,
 }
 
 pub fn serve_with_flags(
@@ -57,7 +59,11 @@ pub fn serve_with_flags(
 
             let response_data = if is_html {
                 if flags.skip_overlay {
-                    inject_external_links_script(&data)
+                    let mut d = inject_external_links_script(&data);
+                    if flags.block_trackers {
+                        d = inject_tracker_blocker(&d, &flags.tracker_domains);
+                    }
+                    d
                 } else {
                     if let Some((timestamp, domain)) = overlay_meta {
                         inject_overlay(&data, &timestamp, &domain)
@@ -76,6 +82,12 @@ pub fn serve_with_flags(
             if let Ok(ac) = Header::from_bytes("Access-Control-Allow-Origin", "*".as_bytes()) {
                 response = response.with_header(ac);
             }
+            // Cache static assets (not HTML) for 24h — avoids re-fetching on every iframe load
+            if !is_html {
+                if let Ok(cc) = Header::from_bytes("Cache-Control", "public, max-age=86400".as_bytes()) {
+                    response = response.with_header(cc);
+                }
+            }
             let _ = request.respond(response);
         } else {
             let not_found_path = site_dir.join("404.html");
@@ -93,6 +105,44 @@ pub fn serve_with_flags(
     }
 
     Ok(())
+}
+
+/// Inject tracker blocker script inline before </head>, after external-links script
+fn inject_tracker_blocker(html: &[u8], domains: &[String]) -> Vec<u8> {
+    let js = crate::assets::tracker_blocker_js();
+    // Embed the domain list as a JS Set — serialized as JSON array
+    let domains_json = serde_json::to_string(domains).unwrap_or_else(|_| "[]".into());
+    let tag = format!(
+        "\n<!-- webChronicle tracker blocker -->\n<script>var WC_TRACKER_DOMAINS = new Set({});</script>\n<script>{}</script>\n",
+        domains_json, js
+    );
+
+    let content = String::from_utf8_lossy(html);
+
+    if content.contains("wc-external-link") {
+        if let Some(pos) = content.find("wc-external-link") {
+            if let Some(end) = content[pos..].find("</script>") {
+                let insert_at = pos + end + "</script>".len();
+                let mut result = content.to_string();
+                result.insert_str(insert_at, &tag);
+                return result.into_bytes();
+            }
+        }
+    }
+
+    if let Some(pos) = content.find("</head>") {
+        let mut result = content.to_string();
+        result.insert_str(pos, &tag);
+        result.into_bytes()
+    } else if let Some(pos) = content.rfind("</body>") {
+        let mut result = content.to_string();
+        result.insert_str(pos, &tag);
+        result.into_bytes()
+    } else {
+        let mut result = content.into_owned();
+        result.push_str(&tag);
+        result.into_bytes()
+    }
 }
 
 /// Extract (timestamp, domain) from a snapshot path like /snapshots/2025-01-15T10-30-00/example.com/about/
