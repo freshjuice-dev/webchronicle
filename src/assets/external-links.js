@@ -15,21 +15,30 @@
     }, "*");
   }
 
+  // Neutralize target="_top"|"_parent"|"_blank" — keep all nav inside iframe
   document.addEventListener("click", function (e) {
     var a = e.target.closest("a[href]");
     if (!a) return;
+    // Force internal links to stay in iframe
+    if (a.target === "_top" || a.target === "_parent" || a.target === "_blank") {
+      a.target = "_self";
+    }
     var href = a.href;
     if (!href) return;
-    if (href.startsWith(origin) || href.startsWith("/")) return;
-    if (!href.startsWith("http://") && !href.startsWith("https://")) return;
-    e.preventDefault();
-    e.stopPropagation();
-    window.parent.postMessage({ type: "wc-external-link", url: href }, "*");
-  });
+    // External link → open in system browser
+    if (!href.startsWith(origin) && !href.startsWith("/")) {
+      if (href.startsWith("http://") || href.startsWith("https://")) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.parent.postMessage({ type: "wc-external-link", url: href }, "*");
+      }
+    }
+  }, true);
 
   window.addEventListener("message", function (e) {
     if (e.data?.type === "wc-go-back") history.back();
     if (e.data?.type === "wc-go-forward") history.forward();
+    if (e.data?.type === "wc-go-home" && e.data?.url) location.href = e.data.url;
   });
 
   reportNav();
