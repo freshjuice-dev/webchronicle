@@ -43,8 +43,10 @@ pub fn run(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
             let mut urls = Vec::new();
             fetch_sitemap_recursive(&client, seed_url, &mut urls)?;
             urls
-        } else {
+        } else if config.scraper.use_sitemap {
             discover_sitemap_urls(&client, seed_url)?
+        } else {
+            Vec::new()
         };
 
         if sitemap_urls.is_empty() {

@@ -3,6 +3,19 @@ use std::path::Path;
 use tiny_http::{Header, Response, Server};
 
 pub fn serve(site_dir: &Path, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+    serve_with_flags(site_dir, port, ServerFlags::default())
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct ServerFlags {
+    pub skip_overlay: bool,
+}
+
+pub fn serve_with_flags(
+    site_dir: &Path,
+    port: u16,
+    flags: ServerFlags,
+) -> Result<(), Box<dyn std::error::Error>> {
     let addr = format!("0.0.0.0:{}", port);
     eprintln!("Serving {} on http://localhost:{}", site_dir.display(), port);
 
@@ -43,10 +56,14 @@ pub fn serve(site_dir: &Path, port: u16) -> Result<(), Box<dyn std::error::Error
             let data = std::fs::read(&file_path).unwrap_or_default();
 
             let response_data = if is_html {
-                if let Some((timestamp, domain)) = overlay_meta {
-                    inject_overlay(&data, &timestamp, &domain)
+                if flags.skip_overlay {
+                    inject_external_links_script(&data)
                 } else {
-                    data
+                    if let Some((timestamp, domain)) = overlay_meta {
+                        inject_overlay(&data, &timestamp, &domain)
+                    } else {
+                        data
+                    }
                 }
             } else {
                 data
@@ -108,6 +125,35 @@ fn inject_overlay(html: &[u8], timestamp: &str, domain: &str) -> Vec<u8> {
     } else {
         let mut result = content.into_owned();
         result.push_str(&overlay_tag);
+        result.into_bytes()
+    }
+}
+
+/// Inject external link interceptor script inline before </head>
+fn inject_external_links_script(html: &[u8]) -> Vec<u8> {
+    let js = crate::assets::external_links_js();
+    let tag = format!(
+        "\n<!-- webChronicle external links -->\n<script>{}</script>\n",
+        js
+    );
+
+    let content = String::from_utf8_lossy(html);
+
+    if content.contains("wc-external-link") {
+        return html.to_vec();
+    }
+
+    if let Some(pos) = content.find("</head>") {
+        let mut result = content.to_string();
+        result.insert_str(pos, &tag);
+        result.into_bytes()
+    } else if let Some(pos) = content.rfind("</body>") {
+        let mut result = content.to_string();
+        result.insert_str(pos, &tag);
+        result.into_bytes()
+    } else {
+        let mut result = content.into_owned();
+        result.push_str(&tag);
         result.into_bytes()
     }
 }

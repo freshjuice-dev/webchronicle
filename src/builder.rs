@@ -20,7 +20,7 @@ pub fn run(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     copy_snapshots(&site_dir)?;
 
     eprintln!("Rewriting links + injecting overlay ...");
-    rewrite_and_inject(&site_dir)?;
+    rewrite_and_inject(&site_dir, config.scraper.keep_srcset)?;
     rewrite_css_urls(&site_dir)?;
 
     eprintln!("Rendering index page ...");
@@ -108,7 +108,7 @@ fn get_relative_prefix(file_rel: &str) -> String {
     }
 }
 
-fn rewrite_and_inject(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn rewrite_and_inject(site_dir: &Path, keep_srcset: bool) -> Result<(), Box<dyn std::error::Error>> {
     let snapshots_dir = site_dir.join("snapshots");
     if !snapshots_dir.exists() {
         return Ok(());
@@ -117,9 +117,9 @@ fn rewrite_and_inject(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>>
     let mut html_files = Vec::new();
     find_html_files(&snapshots_dir, &mut html_files)?;
 
-    // Match href=/path, href="/path", href='/path'
+    // Match href=/path, href="/path", href='/path' (also href="/" and href='/')
     let href_re = Regex::new(
-        r#"href\s*=\s*(?P<q>["']?)(?P<val>/[^\s"'<>]+)["']?"#
+        r#"href\s*=\s*(?P<q>["']?)(?P<val>/[^\s"'<>]*)["']?"#
     ).unwrap();
 
     // Match href="https://domain/path" — full URL internal links
@@ -239,6 +239,7 @@ fn rewrite_and_inject(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>>
         }).to_string();
 
         // 3. Rewrite srcset + data-srcset — handle /path, https://domain/path, CDN URLs with spaces
+        if keep_srcset {
         modified = srcset_re.replace_all(&modified, |caps: &regex::Captures| {
             let val = caps.get(1).unwrap().as_str();
             // Use smart parser that handles spaces in CDN URLs
@@ -282,6 +283,10 @@ fn rewrite_and_inject(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>>
             };
             format!("{}=\"{}\"", attr_name, new_entries.join(", "))
         }).to_string();
+        } else {
+            // Strip srcset and data-srcset — src is already saved and served locally
+            modified = srcset_re.replace_all(&modified, "").to_string();
+        }
 
         // 3b. Replace lazy-load placeholder src="data:image/svg+xml..." with local path from data-src
         let lazy_src_re = Regex::new(

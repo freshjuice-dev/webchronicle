@@ -21,7 +21,13 @@ pub struct ScraperConfig {
     pub recursive: bool,
     pub max_depth: u32,
     pub url_filter: Option<Vec<String>>,
+    #[serde(default = "default_true")]
+    pub use_sitemap: bool,
+    #[serde(default)]
+    pub keep_srcset: bool,
 }
+
+fn default_true() -> bool { true }
 
 impl Config {
     pub fn load(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
@@ -44,6 +50,7 @@ base_url = "https://webchronicle.app"
 urls = ["https://example.com"]
 recursive = true
 max_depth = 3
+use_sitemap = true
 # url_filter = ["example.com"]  # optional: only scrape these domains
 "#.to_string()
     }

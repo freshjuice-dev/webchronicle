@@ -3,6 +3,7 @@ use std::path::Path;
 
 const MAIN_CSS: &str = include_str!("assets/main.css");
 const OVERLAY_JS: &str = include_str!("assets/overlay.js");
+const EXTERNAL_LINKS_JS: &str = include_str!("assets/external-links.js");
 
 pub fn write_assets(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let css_dir = site_dir.join("css");
@@ -18,4 +19,8 @@ pub fn write_assets(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn overlay_js() -> &'static str {
     OVERLAY_JS
+}
+
+pub fn external_links_js() -> &'static str {
+    EXTERNAL_LINKS_JS
 }
