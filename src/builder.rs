@@ -203,7 +203,14 @@ fn rewrite_and_inject(site_dir: &Path, keep_srcset: bool) -> Result<(), Box<dyn 
             };
 
             if is_asset {
-                // Assets: point to live domain
+                // Try local first — scraper downloads same-domain assets
+                let local_path = resolve_local_asset(&snapshot_base, val);
+                if local_path.exists() {
+                    let local_rel = local_path.strip_prefix(&snapshot_base).unwrap();
+                    let local_str = local_rel.to_string_lossy().to_string();
+                    return format!("href=\"{}{}\"", rel_prefix, local_str);
+                }
+                // No local copy — point to live domain
                 return format!("href=\"{}{}\"", live_base, val);
             }
 
@@ -337,6 +344,12 @@ fn rewrite_and_inject(site_dir: &Path, keep_srcset: bool) -> Result<(), Box<dyn 
             };
 
             if is_asset {
+                // Try local first — scraper downloads same-domain assets
+                let local_path = resolve_local_asset(&snapshot_base, path_part);
+                if local_path.exists() {
+                    let local_rel = local_path.strip_prefix(&snapshot_base).unwrap();
+                    return format!("\"{}\"", local_rel.to_string_lossy());
+                }
                 return caps.get(0).unwrap().as_str().to_string();
             }
 
