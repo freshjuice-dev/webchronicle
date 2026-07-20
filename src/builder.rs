@@ -540,8 +540,10 @@ fn rewrite_css_urls(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let mut css_files = Vec::new();
     find_css_files(&snapshots_dir, &mut css_files)?;
 
-    // Match url(/path), url("/path"), url('/path')
-    let url_re = Regex::new(r#"url\(\s*["']?(/[^)"'\s]+)["']?\s*\)"#).unwrap();
+    // Match url(/path), url("/path"), url('/path') — root-relative
+    let url_re = Regex::new(r#"(?i)url\(\s*["']?(/[^)"'\s]+)["']?\s*\)"#).unwrap();
+    // Match url(https://domain/path) — full URL
+    let full_url_re = Regex::new(r#"(?i)url\(\s*["']?(https?://[^)"'\s]+)["']?\s*\)"#).unwrap();
 
     let mut count = 0;
     for file in &css_files {
@@ -556,6 +558,8 @@ fn rewrite_css_urls(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
 
         // snapshot_base is the domain directory: _site/snapshots/<timestamp>/<domain>/
         let snapshot_base: PathBuf = snapshots_dir.join(&components[0]).join(&components[1]);
+        let domain = &components[1];
+        let live_base = format!("https://{}", domain);
 
         // CSS file depth relative to snapshot_base
         let css_rel = file.strip_prefix(&snapshot_base).unwrap_or(file);
@@ -573,9 +577,30 @@ fn rewrite_css_urls(site_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
                 if local_path.exists() {
                     format!("url({}{})", up, val.trim_start_matches('/'))
                 } else {
-                    // Keep original if file doesn't exist locally
                     caps.get(0).unwrap().as_str().to_string()
                 }
+            })
+            .to_string();
+
+        // Rewrite url(https://domain/path) → local if exists
+        modified = full_url_re
+            .replace_all(&modified, |caps: &regex::Captures| {
+                let val = caps.get(1).unwrap().as_str();
+                // Same domain
+                if let Some(path_part) = val.strip_prefix(&live_base) {
+                    let local_path = snapshot_base.join(path_part.trim_start_matches('/'));
+                    if local_path.exists() {
+                        return format!("url({}{})", up, path_part.trim_start_matches('/'));
+                    }
+                }
+                // External CDN
+                if let Some(local_path) = resolve_cdn_asset(&snapshot_base, val, domain) {
+                    if local_path.exists() {
+                        let local_rel = local_path.strip_prefix(&snapshot_base).unwrap();
+                        return format!("url({}{})", up, local_rel.to_string_lossy());
+                    }
+                }
+                caps.get(0).unwrap().as_str().to_string()
             })
             .to_string();
 
