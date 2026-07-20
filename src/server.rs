@@ -73,6 +73,9 @@ pub fn serve_with_flags(
             if let Ok(ct) = Header::from_bytes("Content-Type", content_type.as_bytes()) {
                 response = response.with_header(ct);
             }
+            if let Ok(ac) = Header::from_bytes("Access-Control-Allow-Origin", "*".as_bytes()) {
+                response = response.with_header(ac);
+            }
             let _ = request.respond(response);
         } else {
             let not_found_path = site_dir.join("404.html");

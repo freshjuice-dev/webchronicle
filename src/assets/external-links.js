@@ -3,7 +3,6 @@
 (function () {
   var origin = window.location.origin;
 
-  // Report nav state to parent on every load
   function reportNav() {
     window.parent.postMessage({
       type: "wc-nav-state",
@@ -13,7 +12,6 @@
     }, "*");
   }
 
-  // Intercept external links
   document.addEventListener("click", function (e) {
     var a = e.target.closest("a[href]");
     if (!a) return;
@@ -24,6 +22,11 @@
     e.preventDefault();
     e.stopPropagation();
     window.parent.postMessage({ type: "wc-external-link", url: href }, "*");
+  });
+
+  window.addEventListener("message", function (e) {
+    if (e.data?.type === "wc-go-back") history.back();
+    if (e.data?.type === "wc-go-forward") history.forward();
   });
 
   reportNav();
