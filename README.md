@@ -1,4 +1,7 @@
-# webChronicle
+<h1 style="line-height: 64px; display: flex; align-items: center; justify-content: flex-start;">
+  <img src="src/assets/icon.png" width="64" height="64" alt="webChronicle logo">
+      webChronicle
+</h1>
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/freshjuice-dev/webchronicle)](https://github.com/freshjuice-dev/webchronicle/releases/latest)
@@ -13,7 +16,9 @@ A web archiver that runs on your machine. Save snapshots of websites and browse 
 - Nothing leaves your computer. No cloud, no uploads, no telemetry
 - Multiple domains in one snapshot
 - Recursive scraping (follows links to grab whole sites)
-- Overlay with archive date and back link (injected on-the-fly, snapshots stay clean)
+- Automatic favicon capture from page `<head>`
+- High-contrast mode support (follows OS accessibility settings)
+- Dark mode follows system preferences
 
 ## Quick start
 
@@ -70,7 +75,8 @@ Snapshots land in `scraped-websites/` with a timestamp folder per domain, plus a
 scraped-websites/
 ├── 2025-01-15T10-30-00/
 │   ├── example.com/
-│   │   └── index.html
+│   │   ├── index.html
+│   │   └── favicon.png
 │   └── example.org/
 │       └── index.html
 └── ledger.toml
@@ -84,11 +90,7 @@ Rust binary. Tera templates for the index page. System fonts, no frameworks.
 
 ## Contributing
 
-Fork, branch, PR. Found a bug? [Open an issue](https://github.com/freshjuice-dev/webchronicle/issues).
-
-## Credits
-
-Logo by [Tatiana Zappa](https://tatiana.zappa.art/).
+See [CONTRIBUTING.md](CONTRIBUTING.md). External contributions require the [CLA](CLA.md).
 
 ## License
 

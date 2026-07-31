@@ -1,6 +1,6 @@
 [package]
 name = "webchronicle"
-version = "2.0.0"
+version = "2.1.0"
 edition = "2024"
 description = "A web archiver that runs on your machine"
 license = "AGPL-3.0-or-later"

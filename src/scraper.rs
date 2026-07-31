@@ -287,6 +287,12 @@ fn scrape_page_sitemap(
     }
 
     fs::write(&local_path, &body)?;
+
+    // First page (index.html) — grab favicon to domain root
+    if local_path == dest.join("index.html") {
+        let _ = download_favicon(client, &document, &base_url, dest);
+    }
+
     eprintln!("  [{}/{}] {}", idx, total, url);
     Ok(())
 }
@@ -346,46 +352,53 @@ fn scrape_page(
 
     fs::write(&local_path, &body)?;
 
-    if is_html && config.scraper.recursive && depth < config.scraper.max_depth {
+    if is_html {
         let html_str = String::from_utf8_lossy(&body);
         let document = Html::parse_document(&html_str);
-        let link_sel = Selector::parse("a[href]").unwrap();
-        let asset_sel = Selector::parse("link[href], script[src], img[src]").unwrap();
 
-        for element in document.select(&asset_sel) {
-            if let Some(href) = element.value().attr("href") {
-                if let Some(abs) = base_url.join(href).ok() {
-                    if abs.host_str() == base_url.host_str() {
-                        let _ = download_asset(client, abs.as_str(), dest, seen);
-                    }
-                }
-            }
-            if let Some(src) = element.value().attr("src") {
-                if let Some(abs) = base_url.join(src).ok() {
-                    if abs.host_str() == base_url.host_str() {
-                        let _ = download_asset(client, abs.as_str(), dest, seen);
-                    }
-                }
-            }
+        if local_path == dest.join("index.html") {
+            let _ = download_favicon(client, &document, &base_url, dest);
         }
 
-        for element in document.select(&link_sel) {
-            if let Some(href) = element.value().attr("href") {
-                if href.starts_with('#')
-                    || href.starts_with("javascript:")
-                    || href.starts_with("mailto:")
-                    || href.starts_with("tel:")
-                {
-                    continue;
+        if config.scraper.recursive && depth < config.scraper.max_depth {
+            let link_sel = Selector::parse("a[href]").unwrap();
+            let asset_sel = Selector::parse("link[href], script[src], img[src]").unwrap();
+
+            for element in document.select(&asset_sel) {
+                if let Some(href) = element.value().attr("href") {
+                    if let Some(abs) = base_url.join(href).ok() {
+                        if abs.host_str() == base_url.host_str() {
+                            let _ = download_asset(client, abs.as_str(), dest, seen);
+                        }
+                    }
                 }
-                if let Some(abs) = base_url.join(href).ok() {
-                    let abs_str = abs.as_str();
-                    let already_seen = seen.lock().unwrap().contains(&normalize_url(abs_str));
-                    if config.url_allowed(abs_str)
-                        && abs.host_str() == base_url.host_str()
-                        && !already_seen
+                if let Some(src) = element.value().attr("src") {
+                    if let Some(abs) = base_url.join(src).ok() {
+                        if abs.host_str() == base_url.host_str() {
+                            let _ = download_asset(client, abs.as_str(), dest, seen);
+                        }
+                    }
+                }
+            }
+
+            for element in document.select(&link_sel) {
+                if let Some(href) = element.value().attr("href") {
+                    if href.starts_with('#')
+                        || href.starts_with("javascript:")
+                        || href.starts_with("mailto:")
+                        || href.starts_with("tel:")
                     {
-                        let _ = scrape_page(client, abs_str, base_url, dest, config, depth + 1, seen);
+                        continue;
+                    }
+                    if let Some(abs) = base_url.join(href).ok() {
+                        let abs_str = abs.as_str();
+                        let already_seen = seen.lock().unwrap().contains(&normalize_url(abs_str));
+                        if config.url_allowed(abs_str)
+                            && abs.host_str() == base_url.host_str()
+                            && !already_seen
+                        {
+                            let _ = scrape_page(client, abs_str, base_url, dest, config, depth + 1, seen);
+                        }
                     }
                 }
             }
@@ -534,4 +547,35 @@ fn normalize_url(url: &str) -> String {
     } else {
         without_frag.to_string()
     }
+}
+
+fn download_favicon(
+    client: &Client,
+    document: &Html,
+    base_url: &Url,
+    dest: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let icon_sel = Selector::parse(r#"link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[rel="apple-touch-icon-precomposed"]"#).unwrap();
+    for element in document.select(&icon_sel) {
+        if let Some(href) = element.value().attr("href") {
+            if href.starts_with("data:") { continue; }
+            if let Some(abs) = base_url.join(href).ok() {
+                let resp = client.get(abs.as_str()).send()?;
+                if resp.status().is_success() {
+                    let body = resp.bytes()?;
+                    let ext = abs.path().rsplit('.').next().unwrap_or("png");
+                    let fname = format!("favicon.{}", ext);
+                    let fav_path = dest.join(&fname);
+                    fs::write(&fav_path, &body)?;
+                    // Also save as favicon.png for normalized access
+                    if ext != "png" {
+                        fs::write(dest.join("favicon.png"), &body)?;
+                    }
+                    eprintln!("  favicon: {}", abs);
+                    return Ok(());
+                }
+            }
+        }
+    }
+    Ok(())
 }

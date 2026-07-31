@@ -3,26 +3,50 @@
 {% block content %}
 {% if has_snapshots %}
 <div class="wc-archive-header">
-    <h1>Archive</h1>
-    <p class="wc-archive-meta">{{ total_sites }} sites · {{ total_snapshots }} snapshots</p>
+    <div>
+        <h1>Saved snapshots</h1>
+        <p class="wc-archive-meta">{{ total_sites }} sites · {{ total_snapshots }} snapshots — click to open</p>
+    </div>
+    <select class="wc-filter" onchange="wcFilterDomain(this.value)">
+        <option value="">All websites</option>
+        {% for strip in strips %}
+        <option value="{{ strip.domain }}">{{ strip.domain }}</option>
+        {% endfor %}
+    </select>
 </div>
 
+<div class="wc-snapshots">
 {% for strip in strips %}
-<section class="wc-site">
-    <h2 class="wc-site-title">{{ strip.domain }}</h2>
-    <span class="wc-site-count">{{ strip.snapshots|length }} snapshot{% if strip.snapshots|length > 1 %}s{% endif %}</span>
-    <ul class="wc-snapshot-list">
-        {% for snap in strip.snapshots %}
-        <li class="wc-snapshot">
-            <a href="/snapshots/{{ snap.time }}/{{ strip.domain }}/" class="wc-snapshot-link">
-                <time class="wc-snapshot-date">{{ snap.time | format_date(format="d LLL yyyy") }}</time>
-                <span class="wc-snapshot-time">{{ snap.time | format_date(format="hh:mm a") }}</span>
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-</section>
+{% for snap in strip.snapshots %}
+<a href="/snapshots/{{ snap.time }}/{{ strip.domain }}/" class="wc-snap-card" data-domain="{{ strip.domain }}">
+    <div class="wc-snap-icon">
+        <img src="/snapshots/{{ snap.time }}/{{ strip.domain }}/favicon.png" alt="" class="wc-snap-favicon" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18" style="display:none"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    </div>
+    <div class="wc-snap-info">
+        <div class="wc-snap-domain">{{ strip.domain }}</div>
+        <div class="wc-snap-time">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {{ snap.time | format_date(format="d LLL yyyy 'at' hh:mm a") }}
+        </div>
+    </div>
+    <svg class="wc-snap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+</a>
 {% endfor %}
+{% endfor %}
+</div>
+
+<script>
+function wcFilterDomain(domain) {
+    document.querySelectorAll('.wc-snap-card').forEach(function(card) {
+        if (!domain || card.dataset.domain === domain) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
 
 {% else %}
 <div class="wc-empty">
