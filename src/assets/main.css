@@ -49,10 +49,9 @@ a:hover { color: var(--wc-link-hover); text-decoration: underline; }
 code { font-family: ui-monospace, "SF Mono", Menlo, monospace; background: var(--wc-card); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
 
 .wc-header { padding: 2.5rem 1rem 2rem; text-align: center; }
-.wc-logo { color: var(--wc-fg); display: inline-flex; flex-direction: column; align-items: center; gap: 0.8rem; text-decoration: none; }
+.wc-logo { color: var(--wc-fg); display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; }
 .wc-logo:hover { text-decoration: none; }
-.wc-logo-icon { width: 120px; height: 120px; border-radius: 20px; }
-.wc-logo-text { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; }
+.wc-logo-icon { width: 44px; height: 44px; }
 
 .wc-main { flex: 1; max-width: 640px; width: 100%; margin: 0 auto; padding: 0 1rem 2rem; }
 
