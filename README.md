@@ -1,6 +1,7 @@
 <h1 style="line-height: 64px; display: flex; align-items: center; justify-content: flex-start;">
-  <img src="src/assets/icon.png" width="64" height="64" alt="webChronicle logo">
-      webChronicle
+  web
+  <img src="src/assets/icon.png" width="32" height="32" alt="webChronicle logo">
+      Chronicle
 </h1>
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
