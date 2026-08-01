@@ -4,7 +4,11 @@ version = "2.1.0"
 edition = "2024"
 description = "A web archiver that runs on your machine"
 license = "AGPL-3.0-or-later"
-authors = ["FreshJuice <contact@freshjuice.dev>"]
+authors = ["FreshJuice <contact@freshjuice.dev>", "Alex Zappa <alex@zoppa.dev>"]
+repository = "https://github.com/freshjuice-dev/webchronicle"
+homepage = "https://webchronicle.app"
+keywords = ["web-archiver", "scraper", "offline", "archive", "snapshot"]
+categories = ["command-line-utilities", "web-programming"]
 
 [lib]
 name = "webchronicle"
