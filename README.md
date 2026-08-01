@@ -6,6 +6,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/freshjuice-dev/webchronicle)](https://github.com/freshjuice-dev/webchronicle/releases/latest)
+[![crates.io](https://img.shields.io/crates/v/webchronicle)](https://crates.io/crates/webchronicle)
 [![GitHub stars](https://img.shields.io/github/stars/freshjuice-dev/webchronicle)](https://github.com/freshjuice-dev/webchronicle/stargazers)
 
 A web archiver that runs on your machine. Save snapshots of websites and browse them later, offline, the way they looked on the day you saved them.
@@ -20,6 +21,22 @@ A web archiver that runs on your machine. Save snapshots of websites and browse 
 - Automatic favicon capture from page `<head>`
 - High-contrast mode support (follows OS accessibility settings)
 - Dark mode follows system preferences
+
+## Install
+
+**From crates.io:**
+
+```bash
+cargo install webchronicle
+```
+
+**From source:**
+
+```bash
+git clone https://github.com/freshjuice-dev/webchronicle.git
+cd webchronicle
+cargo build --release
+```
 
 ## Quick start
 
