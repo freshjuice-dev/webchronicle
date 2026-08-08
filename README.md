@@ -48,6 +48,7 @@ cargo build --release
 ./target/release/webchronicle init
 # edit webchronicle.toml, add your URLs
 ./target/release/webchronicle scrape
+> ⚠️ PRIVATE REPOSITORY — Proprietary and confidential. See [LICENSE](LICENSE).
 ./target/release/webchronicle build
 ./target/release/webchronicle serve --port 3000
 ```
