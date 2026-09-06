@@ -61,7 +61,7 @@ pub fn run(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
             let mut handles = Vec::new();
             let urls: Vec<String> = sitemap_urls
                 .into_iter()
-                .filter(|u| config.url_allowed(u))
+                .filter(|u| config.url_allowed(u) && !is_api_url(u))
                 .collect();
             let total = urls.len();
 
@@ -201,6 +201,10 @@ fn scrape_page_sitemap(
         seen_guard.insert(normalized.clone());
     }
 
+    if is_api_url(url) {
+        return Ok(());
+    }
+
     let resp = client.get(url).send()?;
     let content_type = resp
         .headers()
@@ -316,6 +320,10 @@ fn scrape_page(
         seen_guard.insert(normalized.clone());
     }
 
+    if is_api_url(url) {
+        return Ok(());
+    }
+
     let resp = client.get(url).send()?;
     let content_type = resp
         .headers()
@@ -323,6 +331,13 @@ fn scrape_page(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("")
         .to_string();
+
+    // Only real pages are worth saving — Drupal/JSON:API, Joomla REST, feeds,
+    // GraphQL and any other non-HTML endpoint is dead weight in the archive.
+    // Empty content-type stays lenient (some servers omit it for HTML).
+    if !content_type.is_empty() && !content_type.contains("text/html") {
+        return Ok(());
+    }
 
     let body = resp.bytes()?;
     let is_html = content_type.contains("text/html");
@@ -423,6 +438,12 @@ fn download_asset(
         seen_guard.insert(normalized);
     }
 
+    // Skip only non-json API/admin paths here — a static /data/config.json referenced
+    // by <script src> is a real asset and must be downloaded, not skipped.
+    if !url.contains(".json") && is_api_url(url) {
+        return Ok(());
+    }
+
     let resp = client.get(url).send()?;
     let body = resp.bytes()?;
 
@@ -457,6 +478,10 @@ fn download_asset_any(
 
     // Skip non-asset URLs (data:, javascript:, mailto:, etc.)
     if url.starts_with("data:") || url.starts_with("javascript:") || url.starts_with("mailto:") || url.starts_with("tel:") {
+        return Ok(());
+    }
+
+    if is_api_url(url) && !url.contains(".json") {
         return Ok(());
     }
 
@@ -547,6 +572,39 @@ fn normalize_url(url: &str) -> String {
     } else {
         without_frag.to_string()
     }
+}
+
+/// URL that is never a real page — WordPress REST/admin/feed endpoints and JSON APIs.
+/// ponytail: substring list; extend as new non-page URL shapes show up.
+fn is_api_url(url: &str) -> bool {
+    // Match path+query only, so a host like "feedly.com" can't false-positive on "/feed".
+    let path = match url.find("://") {
+        Some(idx) => {
+            let after = &url[idx + 3..];
+            match after.find('/') {
+                Some(s) => &after[s..],
+                None => "/",
+            }
+        }
+        None => url, // relative URL — match as-is
+    };
+    vec![
+        "/wp-json",
+        "/wp-admin",
+        "/wp-login",
+        "/xmlrpc.php",
+        "/wp-cron.php",
+        "/feed",
+        ".json",
+        "rest_route",
+        // Drupal & Joomla admin/API surfaces (HTML-serving ones need the path list;
+        // JSON/XML APIs are caught by the content-type guard instead)
+        "/jsonapi",
+        "/graphql",
+        "/administrator",
+    ]
+        .iter()
+        .any(|pat| path.contains(pat))
 }
 
 fn download_favicon(
