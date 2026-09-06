@@ -41,5 +41,10 @@
     if (e.data?.type === "wc-go-home" && e.data?.url) location.href = e.data.url;
   });
 
+  // let parent close popovers on any iframe click
+  document.addEventListener("click", function () {
+    window.parent.postMessage({ type: "wc-iframe-click" }, "*");
+  });
+
   reportNav();
 })();
