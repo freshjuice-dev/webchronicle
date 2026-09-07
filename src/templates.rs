@@ -125,7 +125,26 @@ fn parse_timestamp(ts: &str) -> Option<chrono::NaiveDateTime> {
 }
 
 fn format_chrono(dt: &chrono::NaiveDateTime, format: &str) -> String {
-    let chrono_fmt = format
+    // Swap out quoted literals (e.g. 'at') before token replacement — a blind
+    // .replace("a", "%p") would corrupt the "a" inside the literal.
+    const LIT: char = '\u{1}';
+    let mut literals: Vec<String> = Vec::new();
+    let mut protected = String::with_capacity(format.len());
+    let mut rest = format;
+    while let Some(start) = rest.find('\'') {
+        if let Some(end_rel) = rest[start + 1..].find('\'') {
+            let (before, after) = rest.split_at(start);
+            protected.push_str(before);
+            literals.push(after[1..end_rel + 1].to_string());
+            protected.push(LIT);
+            rest = &after[end_rel + 2..];
+        } else {
+            break;
+        }
+    }
+    protected.push_str(rest);
+
+    let chrono_fmt = protected
         .replace("MMMM", "%B")
         .replace("MMM", "%b")
         .replace("yyyy", "%Y")
@@ -139,6 +158,14 @@ fn format_chrono(dt: &chrono::NaiveDateTime, format: &str) -> String {
         .replace("mm", "%M")
         .replace("ss", "%S")
         .replace("a", "%p");
+
+    let mut chrono_fmt = chrono_fmt;
+    for lit in &literals {
+        chrono_fmt = chrono_fmt.replace(
+            LIT.to_string().as_str(),
+            &format!("'{}'", lit.replace('\'', "")),
+        );
+    }
 
     dt.format(&chrono_fmt).to_string()
 }

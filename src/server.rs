@@ -37,6 +37,18 @@ pub fn serve_with_flags(
             .unwrap_or_else(|| path.trim_start_matches('/'));
         let mut file_path = site_dir.join(rel_path);
 
+        // Reject path traversal: the resolved path must stay inside site_dir
+        let site_root = site_dir.canonicalize().unwrap_or_else(|_| site_dir.to_path_buf());
+        if let Ok(resolved) = file_path.canonicalize() {
+            if !resolved.starts_with(&site_root) {
+                let _ = request.respond(
+                    tiny_http::Response::from_string("Forbidden").with_status_code(403),
+                );
+                continue;
+            }
+            file_path = resolved;
+        }
+
         if file_path.is_dir() {
             file_path = file_path.join("index.html");
         }
@@ -142,7 +154,9 @@ fn extract_snapshot_meta(path: &str, site_dir: &Path) -> Option<(PathBuf, String
         return None;
     }
     let timestamp = parts[1];
-    let domain = parts[2].to_string();
+    // Scraper stores .app hosts as "<host>_tld" (macOS bundle workaround);
+    // the URL-facing domain must be the real one for rewriting.
+    let domain = parts[2].strip_suffix("_tld").unwrap_or(parts[2]).to_string();
     let file_rel = if parts.len() > 3 {
         parts[3..].join("/")
     } else {

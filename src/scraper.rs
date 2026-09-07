@@ -31,7 +31,13 @@ pub fn run(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
 
     for seed_url in &config.scraper.urls {
         let base_url = Url::parse(seed_url)?;
-        let domain = base_url.host_str().unwrap_or("unknown").to_string();
+        // *.app dir as a bundle (open/reveal breaks); append "_tld" to .app hosts.
+        let raw_host = base_url.host_str().unwrap_or("unknown").to_string();
+        let domain = if raw_host.ends_with(".app") {
+            format!("{}_tld", raw_host)
+        } else {
+            raw_host
+        };
         let dest = PathBuf::from(&base_dir).join(&domain);
         fs::create_dir_all(&dest)?;
 
@@ -213,7 +219,9 @@ fn scrape_page_sitemap(
         .unwrap_or("")
         .to_string();
 
-    if !content_type.contains("text/html") {
+    // Match the fallback path's leniency: empty content-type stays (some
+    // servers omit it for HTML), explicit non-HTML is skipped.
+    if !content_type.is_empty() && !content_type.contains("text/html") {
         return Ok(());
     }
 
@@ -541,20 +549,29 @@ fn parse_srcset_urls(srcset: &str) -> Vec<String> {
     let mut current_url = String::new();
     
     for part in parts {
-        if part.starts_with("http://") || part.starts_with("https://") || part.starts_with("/") {
+        if part.starts_with("data:") {
+            continue;
+        }
+        // A token is a URL unless it's a descriptor: digits ending in w or x
+        // (310w, 2x, 300x192, 1.5x — with optional trailing comma). This catches
+        // relative URLs like "image.webp 310w" that the old http//,-prefixed
+        // check silently dropped.
+        let stripped = part.trim_end_matches(',');
+        let is_descriptor = {
+            let low = stripped.to_lowercase();
+            let bytes = low.as_bytes();
+            !bytes.is_empty()
+                && matches!(bytes[bytes.len() - 1], b'w' | b'x')
+                && bytes[..bytes.len() - 1].iter().any(|c| c.is_ascii_digit())
+        };
+        if !is_descriptor {
             if !current_url.is_empty() {
                 urls.push(current_url.trim_end_matches(',').to_string());
             }
             current_url = part.to_string();
-        } else if part.starts_with("data:") {
-            // Skip data: URLs
-            continue;
-        } else {
-            // This is a descriptor (like "310w" or "2x") — URL is complete
-            if !current_url.is_empty() {
-                urls.push(current_url.clone());
-                current_url.clear();
-            }
+        } else if !current_url.is_empty() {
+            urls.push(current_url.clone());
+            current_url.clear();
         }
     }
     // Last URL without descriptor
@@ -575,7 +592,6 @@ fn normalize_url(url: &str) -> String {
 }
 
 /// URL that is never a real page — WordPress REST/admin/feed endpoints and JSON APIs.
-/// ponytail: substring list; extend as new non-page URL shapes show up.
 fn is_api_url(url: &str) -> bool {
     // Match path+query only, so a host like "feedly.com" can't false-positive on "/feed".
     let path = match url.find("://") {
