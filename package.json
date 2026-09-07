@@ -1,6 +1,6 @@
 {
   "name": "webchronicle",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "A web archiver that runs on your machine. Save snapshots of websites and browse them later, offline.",
   "repository": {
     "type": "git",
