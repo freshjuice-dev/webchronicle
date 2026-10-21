@@ -12,6 +12,9 @@ use url::Url;
 use crate::config::Config;
 use crate::ledger;
 
+#[cfg(test)]
+mod tests;
+
 pub fn run(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
     if config.scraper.urls.is_empty() {
         return Err("No URLs configured. Edit webchronicle.toml.".into());
@@ -257,7 +260,7 @@ fn scrape_page_sitemap(
     let asset_sel = Selector::parse("link[href], script[src], img[src], source[src], video[src]").unwrap();
 
     for element in document.select(&asset_sel) {
-        if let Some(href) = element.value().attr("href") {
+        if let Some(href) = element.value().attr("href").filter(|_| is_asset_link(&element)) {
             if let Some(abs) = base_url.join(href).ok() {
                 let _ = download_asset_any(client, abs.as_str(), &base_url, dest, seen);
             }
@@ -388,7 +391,7 @@ fn scrape_page(
             let asset_sel = Selector::parse("link[href], script[src], img[src]").unwrap();
 
             for element in document.select(&asset_sel) {
-                if let Some(href) = element.value().attr("href") {
+                if let Some(href) = element.value().attr("href").filter(|_| is_asset_link(&element)) {
                     if let Some(abs) = base_url.join(href).ok() {
                         if abs.host_str() == base_url.host_str() {
                             let _ = download_asset(client, abs.as_str(), dest, seen);
@@ -429,6 +432,31 @@ fn scrape_page(
     }
 
     Ok(())
+}
+
+fn is_asset_link(element: &scraper::ElementRef<'_>) -> bool {
+    let node = element.value();
+    if node
+        .attr("as")
+        .is_some_and(|value| value.eq_ignore_ascii_case("document"))
+    {
+        return false;
+    }
+    node.attr("rel")
+        .unwrap_or("")
+        .split_ascii_whitespace()
+        .any(|rel| {
+            matches!(
+                rel.to_ascii_lowercase().as_str(),
+                "stylesheet"
+                    | "icon"
+                    | "apple-touch-icon"
+                    | "apple-touch-icon-precomposed"
+                    | "mask-icon"
+                    | "preload"
+                    | "modulepreload"
+            )
+        })
 }
 
 fn download_asset(

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use serde::Serialize;
-use tera::{Context, Tera, Value};
+use tera::{Context, Kwargs, State, Tera};
 
 use crate::ledger::{Ledger, SnapshotEntry};
 
@@ -24,10 +24,10 @@ pub struct Templates {
 impl Templates {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let mut tera = Tera::default();
+        tera.register_filter("format_date", format_date_filter);
         tera.add_raw_template("base.html", BASE_TPL)?;
         tera.add_raw_template("index.html", INDEX_TPL)?;
         tera.add_raw_template("404.html", NOT_FOUND_TPL)?;
-        tera.register_filter("format_date", format_date_filter);
         Ok(Templates { tera })
     }
 
@@ -95,21 +95,15 @@ impl Templates {
     }
 }
 
-fn format_date_filter(value: &Value, args: &HashMap<String, Value>) -> Result<Value, tera::Error> {
-    let timestamp = value
-        .as_str()
-        .ok_or_else(|| tera::Error::msg("format_date expects a string"))?;
-
+fn format_date_filter(timestamp: &str, args: Kwargs, _: &State) -> Result<String, tera::Error> {
     let format = args
-        .get("format")
-        .and_then(|v| v.as_str())
+        .get::<&str>("format")?
         .unwrap_or("MMM d, yyyy 'at' h:mma");
 
     let parsed = parse_timestamp(timestamp)
-        .ok_or_else(|| tera::Error::msg(format!("Cannot parse timestamp: {}", timestamp)))?;
+        .ok_or_else(|| tera::Error::message(format!("Cannot parse timestamp: {}", timestamp)))?;
 
-    let formatted = format_chrono(&parsed, format);
-    Ok(Value::String(formatted))
+    Ok(format_chrono(&parsed, format))
 }
 
 fn parse_timestamp(ts: &str) -> Option<chrono::NaiveDateTime> {

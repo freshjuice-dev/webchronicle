@@ -154,16 +154,18 @@ fn extract_snapshot_meta(path: &str, site_dir: &Path) -> Option<(PathBuf, String
         return None;
     }
     let timestamp = parts[1];
-    // Scraper stores .app hosts as "<host>_tld" (macOS bundle workaround);
-    // the URL-facing domain must be the real one for rewriting.
-    let domain = parts[2].strip_suffix("_tld").unwrap_or(parts[2]).to_string();
+    // Scraper stores .app hosts as "<host>_tld" (macOS bundle workaround).
+    // Keep the folder name with _tld for the on-disk path, but expose the
+    // real domain for URL rewriting.
+    let folder = parts[2];
+    let domain = folder.strip_suffix("_tld").unwrap_or(folder).to_string();
     let file_rel = if parts.len() > 3 {
         parts[3..].join("/")
     } else {
         String::new()
     };
 
-    let snapshot_base = site_dir.join(timestamp).join(&domain);
+    let snapshot_base = site_dir.join(timestamp).join(folder);
     Some((snapshot_base, domain, file_rel))
 }
 
